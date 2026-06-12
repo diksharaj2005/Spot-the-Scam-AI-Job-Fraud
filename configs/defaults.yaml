@@ -1,0 +1,151 @@
+project:
+  name: "spot_the_scam"
+  random_seed: 42
+  num_workers: 2
+  experiment_name: "fast-run"
+
+mlflow:
+  enabled: false
+  tracking_uri: "file:./mlruns"
+  registry_uri: null
+  experiment: "spot-the-scam"
+
+data:
+  raw_dir: "data"
+  processed_dir: "data/processed"
+  raw_filenames:
+    - "fake_job_postings.csv"
+    - "Fake_Real_Job_Posting.csv"
+  target_column: "fraudulent"
+  id_column: "job_id"
+
+  text_fields:
+    - "title"
+    - "company_profile"
+    - "description"
+    - "requirements"
+    - "benefits"
+
+  categorical_fields:
+    - "employment_type"
+    - "required_experience"
+    - "required_education"
+    - "industry"
+    - "function"
+
+  numeric_fields: []
+
+  drop_columns:
+    - "salary_range"
+    - "department"
+    - "job_id"
+    - "location"
+    - "unnamed_0"
+    - "_source_file"
+
+  expected_columns:
+    - "job_id"
+    - "title"
+    - "location"
+    - "department"
+    - "salary_range"
+    - "company_profile"
+    - "description"
+    - "requirements"
+    - "benefits"
+    - "telecommuting"
+    - "has_company_logo"
+    - "has_questions"
+    - "employment_type"
+    - "required_experience"
+    - "required_education"
+    - "industry"
+    - "function"
+    - "fraudulent"
+
+splits:
+  train: 0.7
+  val: 0.15
+  test: 0.15
+  stratify: true
+  seed: 42
+
+preprocessing:
+  lowercase_text: true
+  strip_html: true
+  strip_urls: true
+  normalize_whitespace: true
+  fill_missing: "<missing>"
+  max_text_length: 2000
+  duplicate_threshold: 0.95
+  max_vocabulary_size: 50000
+  min_df: 5
+  max_df: 0.9
+
+features:
+  tabular:
+    include_text_length: true
+    include_uppercase_ratio: true
+    include_digit_count: true
+    include_currency_token: true
+    include_exclamation_count: true
+    include_question_count: true
+    include_scamming_terms: true
+    include_url_count: true
+
+models:
+
+  classical:
+    tfidf:
+      ngram_range: [1, 2]
+      min_df: 5
+      max_df: 0.9
+      sublinear_tf: true
+      lowercase: true
+
+    logistic_regression:
+      Cs: [1.0]
+      penalty: "l2"
+      class_weight: "balanced"
+      max_iter: 200
+
+    logistic_regression_l1:
+      Cs: [1.0]
+      class_weight: "balanced"
+      max_iter: 500
+
+    linear_svm:
+      Cs: [1.0]
+      class_weight: "balanced"
+      max_iter: 1000
+
+    lightgbm:
+      num_leaves: [31]
+      max_depth: [-1]
+      learning_rate: [0.05]
+      n_estimators: [100]
+      subsample: [0.9]
+      colsample_bytree: [0.9]
+      class_weight: "balanced"
+
+  xgboost:
+    calibration_method: "sigmoid"
+    early_stopping_rounds: 20
+
+  transformer:
+    enabled: false
+
+evaluation:
+  thresholds:
+    optimize_metric: "f1"
+    metric_class: 1
+
+  metrics:
+    - "f1"
+    - "precision"
+    - "recall"
+    - "roc_auc"
+
+inference:
+  batch_size: 128
+  num_workers: 2
